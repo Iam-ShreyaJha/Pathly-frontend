@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import { useNavigate } from 'react-router-dom'; // Back jane ke liye
 import { 
   Upload, 
@@ -48,11 +48,11 @@ const AdminUpload = () => {
         data.append('description', formData.description);
         data.append('subject', formData.subject);
         data.append('semester', formData.semester);
-        res = await axios.post(`http://localhost:5000/api/notes`, data, {
+        res = await axios.post(`/notes`, data, {
           headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
         });
       } else {
-        res = await axios.post(`http://localhost:5000/api/${type}`, formData, {
+        res = await axios.post(`/${type}`, formData, {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
         });
       }

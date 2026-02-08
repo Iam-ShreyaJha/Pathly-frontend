@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import { Calendar, Bell, Laptop, Cpu, Search, Clock, Globe } from 'lucide-react';
 
 const Events = () => {
@@ -10,7 +10,7 @@ const Events = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const { data } = await axios.get('http://localhost:5000/api/events');
+        const { data } = await axios.get('/events');
         if (data.success) setEvents(data.data);
       } catch (err) { console.error("Fetch error:", err); }
       finally { setLoading(false); }

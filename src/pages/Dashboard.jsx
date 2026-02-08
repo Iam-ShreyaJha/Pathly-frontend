@@ -1,23 +1,21 @@
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
-import { BookOpen, Calendar, Zap, LogOut, Clock, ArrowRight, LayoutDashboard } from 'lucide-react';
+import axios from '../axiosConfig'; // Custom instance
+import { BookOpen, Calendar, Zap, LogOut, Clock, ArrowRight, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, logout, loading } = useContext(AuthContext);
-  const [stats, setStats] = useState({ notesAccessed: 0, eventsTracked: 0, resourcesVisited: 0 });
+  const [stats, setStats] = useState({ notesAccessed: 0, eventsTracked: 0, internshipsAvailable: 0 });
   const [fetchingStats, setFetchingStats] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!user) return; // Login check
+      if (!user) return;
 
       try {
-        const token = localStorage.getItem('token');
-        const { data } = await axios.get('http://localhost:5000/api/dashboard/stats', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        // FIXED: Pura URL hata kar sirf endpoint likha
+        const { data } = await axios.get('/dashboard/stats');
         if (data) setStats(data);
       } catch (err) {
         console.error("Dashboard Stats Fetch Error:", err);
@@ -29,7 +27,6 @@ const Dashboard = () => {
     if (!loading) fetchStats();
   }, [user, loading]);
 
-  // Loading Screen
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen gap-4">
@@ -49,7 +46,7 @@ const Dashboard = () => {
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">
               Welcome, {user?.name ? user.name.split(' ')[0] : 'Student'}! 👋
             </h1>
-            <p className="text-gray-500 font-medium">Here's your academic portal overview.</p>
+            <p className="text-gray-500 font-medium">Your academic and career overview.</p>
           </div>
           <button 
             onClick={logout} 
@@ -66,7 +63,7 @@ const Dashboard = () => {
               <BookOpen size={28} />
             </div>
             <div>
-              <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">Notes Uploaded</p>
+              <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">Library Notes</p>
               <p className="text-3xl font-black text-gray-900">{stats.notesAccessed}</p>
             </div>
           </div>
@@ -81,13 +78,14 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* New Internship Stat */}
           <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all group">
-            <div className="bg-orange-600 p-4 rounded-2xl text-white shadow-lg shadow-orange-100 group-hover:scale-105 transition-transform">
-              <Zap size={28} />
+            <div className="bg-emerald-600 p-4 rounded-2xl text-white shadow-lg shadow-emerald-100 group-hover:scale-105 transition-transform">
+              <Briefcase size={28} />
             </div>
             <div>
-              <p className="text-[10px] text-orange-600 font-black uppercase tracking-widest">Resources Visited</p>
-              <p className="text-3xl font-black text-gray-900">{stats.resourcesVisited}</p>
+              <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">Open Roles</p>
+              <p className="text-3xl font-black text-gray-900">{stats.internshipsAvailable || 0}</p>
             </div>
           </div>
         </div>
@@ -98,7 +96,7 @@ const Dashboard = () => {
             <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
               <Clock size={20} />
             </div>
-            <h2 className="text-xl font-bold text-gray-800">Your Recent Activity</h2>
+            <h2 className="text-xl font-bold text-gray-800">Latest Updates</h2>
           </div>
 
           {fetchingStats ? (
@@ -109,25 +107,24 @@ const Dashboard = () => {
                    <div className="h-3 bg-gray-50 rounded w-1/2"></div>
                 </div>
              </div>
-          ) : stats.notesAccessed > 0 ? (
+          ) : (stats.notesAccessed > 0 || stats.internshipsAvailable > 0) ? (
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-4 p-5 bg-blue-50/50 rounded-3xl border border-blue-100 group">
                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm">
-                  <BookOpen size={20} />
+                  <Zap size={20} />
                 </div>
                 <div className="flex-grow">
-                  <p className="font-bold text-blue-900">Pathly Library Updated</p>
-                  <p className="text-sm text-blue-700">Database now contains {stats.notesAccessed} study documents.</p>
+                  <p className="font-bold text-blue-900">Pathly Hub is Active</p>
+                  <p className="text-sm text-blue-700">You have {stats.notesAccessed} notes and {stats.internshipsAvailable} career leads to explore.</p>
                 </div>
-                <Link to="/notes" className="bg-blue-600 text-white p-2 rounded-xl group-hover:translate-x-1 transition-transform">
+                <Link to="/internships" className="bg-blue-600 text-white p-2 rounded-xl group-hover:translate-x-1 transition-transform">
                   <ArrowRight size={18} />
                 </Link>
               </div>
             </div>
           ) : (
             <div className="text-center py-10 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-              <p className="text-gray-400 font-medium">No activity recorded yet. Start exploring the portal!</p>
-              <Link to="/notes" className="mt-4 inline-block text-blue-600 font-bold hover:underline">Explore Notes</Link>
+              <p className="text-gray-400 font-medium">Everything is quiet. Check back later for updates!</p>
             </div>
           )}
         </div>
