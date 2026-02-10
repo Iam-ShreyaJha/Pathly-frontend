@@ -17,11 +17,19 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      // FIXED: Pura URL hata kar endpoint ko chota kiya
+      // 1. Request to backend
       const { data } = await axios.post('/auth/register', formData);
-      login(data); 
-      navigate('/dashboard'); 
+      
+      // 2. data contains { success: true, token: "...", user: {...} }
+      // This will set the user in context and localStorage
+      if (data.token) {
+        login(data); 
+        
+        // 3. Direct navigation to dashboard (Auto-login)
+        navigate('/dashboard'); 
+      }
     } catch (err) {
+      // Shows specific error from backend (like duplicate email)
       setError(err.response?.data?.error || 'Registration failed. Try again.');
     } finally {
       setLoading(false);
@@ -43,7 +51,7 @@ const Signup = () => {
         </div>
         
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 text-sm font-bold border border-red-100 animate-pulse">
+          <div className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 text-sm font-bold border border-red-100">
             {error}
           </div>
         )}
@@ -55,7 +63,7 @@ const Signup = () => {
               <User className="absolute left-4 top-4 text-gray-400" size={18} />
               <input 
                 type="text" 
-                placeholder="John Doe"
+                placeholder="Your Name"
                 required 
                 className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium"
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -83,12 +91,13 @@ const Signup = () => {
               <Lock className="absolute left-4 top-4 text-gray-400" size={18} />
               <input 
                 type="password" 
-                placeholder="Min. 6 characters"
+                placeholder="A-z, 0-9, @# (Min. 8)"
                 required 
                 className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium"
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
               />
             </div>
+            <p className="text-[9px] text-gray-400 ml-2 italic">Must include uppercase, lowercase, number & symbol.</p>
           </div>
 
           <button 

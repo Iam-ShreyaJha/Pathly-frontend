@@ -1,22 +1,36 @@
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import axios from '../axiosConfig'; // Custom instance
-import { BookOpen, Calendar, Zap, LogOut, Clock, ArrowRight, Briefcase } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import axios from '../axiosConfig'; 
+import { BookOpen, Calendar, Zap, Clock, ArrowRight, Briefcase, Layout } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { user, logout, loading } = useContext(AuthContext);
-  const [stats, setStats] = useState({ notesAccessed: 0, eventsTracked: 0, internshipsAvailable: 0 });
+  const { user, loading } = useContext(AuthContext);
+  const navigate = useNavigate();
+  
+  const [stats, setStats] = useState({ 
+    notesAccessed: 0, 
+    eventsTracked: 0, 
+    internshipsAvailable: 0 
+  });
+  const [recentEvents, setRecentEvents] = useState([]);
   const [fetchingStats, setFetchingStats] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       if (!user) return;
-
       try {
-        // FIXED: Pura URL hata kar sirf endpoint likha
-        const { data } = await axios.get('/dashboard/stats');
-        if (data) setStats(data);
+        const response = await axios.get('/dashboard/stats');
+        const result = response.data.data || response.data;
+
+        if (result) {
+          setStats({
+            notesAccessed: Number(result.notesAccessed) || 0,
+            eventsTracked: Number(result.eventsTracked) || 0,
+            internshipsAvailable: Number(result.internshipsAvailable) || 0
+          });
+          setRecentEvents(result.recentEvents || []); 
+        }
       } catch (err) {
         console.error("Dashboard Stats Fetch Error:", err);
       } finally {
@@ -24,107 +38,121 @@ const Dashboard = () => {
       }
     };
 
-    if (!loading) fetchStats();
-  }, [user, loading]);
+    if (!loading) {
+      if (!user) navigate('/login');
+      else fetchStats();
+    }
+  }, [user, loading, navigate]);
 
-  if (loading) {
+  if (loading || !user) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen gap-4">
+      <div className="flex justify-center items-center h-screen bg-[#F8FAFC]">
         <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="font-bold text-gray-400">Loading Pathly...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 md:p-10">
-      <div className="container mx-auto max-w-6xl">
-        
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-              Welcome, {user?.name ? user.name.split(' ')[0] : 'Student'}! 👋
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {/* HERO SECTION */}
+      <div className="bg-white border-b py-16 px-6 relative overflow-hidden">
+        <div className="container mx-auto max-w-6xl relative z-10 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-10">
+          <div className="max-w-2xl">
+            <h1 className="text-5xl md:text-6xl font-black text-gray-900 tracking-tighter mb-6 leading-tight">
+              Welcome, <span className="text-blue-600">{user?.name?.split(' ')[0]}</span>! 🚀
             </h1>
-            <p className="text-gray-500 font-medium">Your academic and career overview.</p>
+            <p className="text-lg md:text-xl text-gray-500 font-medium leading-relaxed text-left">
+              Manage your progress and explore new opportunities.
+            </p>
           </div>
-          <button 
-            onClick={logout} 
-            className="flex items-center gap-2 bg-white text-red-600 px-5 py-2.5 rounded-2xl font-bold hover:bg-red-50 transition-all border border-red-100 shadow-sm"
+          <div className="hidden lg:block bg-blue-50 p-8 rounded-[3rem] border border-blue-100">
+             <Layout size={80} className="text-blue-200" />
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto max-w-6xl px-6 py-12">
+        {/* STATS GRID - NOW CLICKABLE */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          
+          {/* Study Material (Notes) Card */}
+          <div 
+            onClick={() => navigate('/notes')} 
+            className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center gap-6 hover:shadow-xl hover:scale-[1.02] cursor-pointer transition-all group"
           >
-            <LogOut size={18} /> Logout
-          </button>
+            <div className="bg-blue-600 p-5 rounded-3xl text-white shadow-xl shadow-blue-100 group-hover:bg-blue-700 transition-colors">
+              <BookOpen size={32} />
+            </div>
+            <div>
+              <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mb-1 text-left">Study Material</p>
+              <p className="text-4xl font-black text-gray-900 text-left">
+                {fetchingStats ? "..." : stats.notesAccessed}
+              </p>
+            </div>
+          </div>
+
+          {/* Upcoming Events Card */}
+          <div 
+            onClick={() => navigate('/events')} 
+            className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center gap-6 hover:shadow-xl hover:scale-[1.02] cursor-pointer transition-all group"
+          >
+            <div className="bg-purple-600 p-5 rounded-3xl text-white shadow-xl shadow-purple-100 group-hover:bg-purple-700 transition-colors">
+              <Calendar size={32} />
+            </div>
+            <div>
+              <p className="text-[10px] text-purple-600 font-black uppercase tracking-widest mb-1 text-left">Upcoming Events</p>
+              <p className="text-4xl font-black text-gray-900 text-left">
+                {fetchingStats ? "..." : stats.eventsTracked}
+              </p>
+            </div>
+          </div>
+
+          {/* Active Roles (Internships) Card */}
+          <div 
+            onClick={() => navigate('/internships')} 
+            className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center gap-6 hover:shadow-xl hover:scale-[1.02] cursor-pointer transition-all group"
+          >
+            <div className="bg-emerald-600 p-5 rounded-3xl text-white shadow-xl shadow-emerald-100 group-hover:bg-emerald-700 transition-colors">
+              <Briefcase size={32} />
+            </div>
+            <div>
+              <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest mb-1 text-left">Active Roles</p>
+              <p className="text-4xl font-black text-gray-900 text-left">
+                {fetchingStats ? "..." : stats.internshipsAvailable}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all group">
-            <div className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg shadow-blue-100 group-hover:scale-105 transition-transform">
-              <BookOpen size={28} />
-            </div>
-            <div>
-              <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">Library Notes</p>
-              <p className="text-3xl font-black text-gray-900">{stats.notesAccessed}</p>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all group">
-            <div className="bg-purple-600 p-4 rounded-2xl text-white shadow-lg shadow-purple-100 group-hover:scale-105 transition-transform">
-              <Calendar size={28} />
-            </div>
-            <div>
-              <p className="text-[10px] text-purple-600 font-black uppercase tracking-widest">Events Tracked</p>
-              <p className="text-3xl font-black text-gray-900">{stats.eventsTracked}</p>
-            </div>
-          </div>
-
-          {/* New Internship Stat */}
-          <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all group">
-            <div className="bg-emerald-600 p-4 rounded-2xl text-white shadow-lg shadow-emerald-100 group-hover:scale-105 transition-transform">
-              <Briefcase size={28} />
-            </div>
-            <div>
-              <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">Open Roles</p>
-              <p className="text-3xl font-black text-gray-900">{stats.internshipsAvailable || 0}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity Card */}
-        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-              <Clock size={20} />
-            </div>
-            <h2 className="text-xl font-bold text-gray-800">Latest Updates</h2>
-          </div>
+        {/* LATEST UPDATES SECTION */}
+        <div className="bg-white p-8 md:p-12 rounded-[3rem] border border-gray-100 shadow-sm">
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3 mb-10 text-left">
+            <Zap size={24} className="text-orange-500 fill-orange-500" /> Latest Activities
+          </h2>
 
           {fetchingStats ? (
-             <div className="flex gap-4 items-center animate-pulse">
-                <div className="w-12 h-12 bg-gray-100 rounded-xl"></div>
-                <div className="flex-grow space-y-2">
-                   <div className="h-4 bg-gray-100 rounded w-1/4"></div>
-                   <div className="h-3 bg-gray-50 rounded w-1/2"></div>
-                </div>
+             <div className="space-y-4 animate-pulse">
+                <div className="h-20 bg-gray-50 rounded-[2rem]"></div>
+                <div className="h-20 bg-gray-50 rounded-[2rem]"></div>
              </div>
-          ) : (stats.notesAccessed > 0 || stats.internshipsAvailable > 0) ? (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-4 p-5 bg-blue-50/50 rounded-3xl border border-blue-100 group">
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm">
-                  <Zap size={20} />
+          ) : recentEvents.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              {recentEvents.map(event => (
+                <div key={event._id} className="flex items-center gap-6 p-6 bg-blue-50/40 rounded-[2rem] border border-blue-100/50 hover:bg-blue-50 transition-colors text-left">
+                  <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm">
+                    <Zap size={24} />
+                  </div>
+                  <div className="flex-grow">
+                    <p className="text-lg font-black text-blue-900 leading-tight">{event.title}</p>
+                    <p className="text-blue-700/70 font-medium mt-1">{event.description || 'New update available'}</p>
+                  </div>
                 </div>
-                <div className="flex-grow">
-                  <p className="font-bold text-blue-900">Pathly Hub is Active</p>
-                  <p className="text-sm text-blue-700">You have {stats.notesAccessed} notes and {stats.internshipsAvailable} career leads to explore.</p>
-                </div>
-                <Link to="/internships" className="bg-blue-600 text-white p-2 rounded-xl group-hover:translate-x-1 transition-transform">
-                  <ArrowRight size={18} />
-                </Link>
-              </div>
+              ))}
             </div>
           ) : (
-            <div className="text-center py-10 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-              <p className="text-gray-400 font-medium">Everything is quiet. Check back later for updates!</p>
+            <div className="text-center py-16 bg-gray-50/50 rounded-[3rem] border border-dashed border-gray-200">
+              <p className="text-gray-500 font-bold text-lg">No recent activity</p>
+              <p className="text-gray-400 text-sm mt-1 text-center italic">Start exploring to see real-time updates here!</p>
             </div>
           )}
         </div>

@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { BookOpen, LogOut, User as UserIcon, ShieldAlert, Briefcase } from 'lucide-react';
+import { BookOpen, LogOut, User as UserIcon, ShieldAlert, Briefcase, Home } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -15,7 +15,7 @@ const Navbar = () => {
   return (
     <nav className="bg-white border-b sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-        {/* Logo */}
+        {/* Logo - Clicking this also takes you Home/Dashboard */}
         <Link to="/" className="flex items-center gap-2 text-2xl font-black text-blue-600 tracking-tighter">
           <BookOpen size={28} strokeWidth={3} />
           <span>Pathly</span>
@@ -25,28 +25,34 @@ const Navbar = () => {
         <div className="flex items-center gap-6">
           {user ? (
             <>
+              {/* --- NEW HOME LINK --- */}
+              <Link to="/" className="text-gray-600 hover:text-blue-600 font-bold text-sm flex items-center gap-1 transition-colors">
+                <Home size={16} /> Home
+              </Link>
+
               {/* Common Links for Logged In Users */}
               <Link to="/notes" className="text-gray-600 hover:text-blue-600 font-bold text-sm transition-colors">Notes</Link>
               <Link to="/events" className="text-gray-600 hover:text-blue-600 font-bold text-sm transition-colors">Events</Link>
               
-              {/* --- NEW INTERNSHIPS LINK --- */}
               <Link to="/internships" className="text-gray-600 hover:text-blue-600 font-bold text-sm flex items-center gap-1.5 transition-colors">
                 <Briefcase size={16} /> Internships
               </Link>
               
               <Link to="/resources" className="text-gray-600 hover:text-blue-600 font-bold text-sm transition-colors">Roadmaps</Link>
               
-              {/* --- ADMIN MODE BUTTON --- */}
-              <Link 
-                to="/admin/upload" 
-                className="bg-orange-50 text-orange-700 px-3 py-1.5 rounded-xl text-[10px] font-black hover:bg-orange-100 transition-all flex items-center gap-1 border border-orange-200 uppercase tracking-tighter"
-              >
-                <ShieldAlert size={14} /> Admin Panel ⚡
-              </Link>
+              {/* ADMIN MODE BUTTON */}
+              {user?.role === 'admin' && (
+                <Link 
+                  to="/admin/upload" 
+                  className="bg-orange-50 text-orange-700 px-3 py-1.5 rounded-xl text-[10px] font-black hover:bg-orange-100 transition-all flex items-center gap-1 border border-orange-200 uppercase tracking-tighter"
+                >
+                  <ShieldAlert size={14} /> Admin Panel ⚡
+                </Link>
+              )}
 
               {/* User Profile & Logout */}
               <div className="flex items-center gap-4 ml-4 border-l pl-6">
-                <Link to="/dashboard" className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-bold text-sm">
+                <Link to="/profile" className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-bold text-sm">
                   <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 border border-blue-100">
                     <UserIcon size={16} />
                   </div>
