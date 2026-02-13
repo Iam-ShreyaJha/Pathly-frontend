@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from '../axiosConfig';
-import { useNavigate } from 'react-router-dom'; // Back jane ke liye
+import { useNavigate } from 'react-router-dom';
+import ManageContent from '../components/ManageContent'; // Management component import
 import { 
   Upload, 
   PlusCircle, 
@@ -13,27 +14,39 @@ import {
   Link as LinkIcon, 
   ChevronDown, 
   AlignLeft,
-  X // Close icon add kiya gaya
+  X,
+  Star 
 } from 'lucide-react';
 
 const AdminUpload = () => {
-  const navigate = useNavigate(); // Navigation hook
+  const navigate = useNavigate();
   const [type, setType] = useState('notes'); 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     subject: '',
     semester: '',
+    year: '1st Year',
     category: 'Hackathon', 
     date: '',
     link: '',
     company: '',
-    techStack: ''
+    techStack: '',
+    isSyllabus: false 
   });
   const [file, setFile] = useState(null); 
   const [status, setStatus] = useState('');
 
   const categories = ["Hackathon", "Tech Event", "Workshop", "Webinar", "Exhibition", "Conference", "Cultural Fest"];
+  const years = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+
+  const getSemsForYear = (selectedYear) => {
+    if (selectedYear === '1st Year') return [1, 2];
+    if (selectedYear === '2nd Year') return [3, 4];
+    if (selectedYear === '3rd Year') return [5, 6];
+    if (selectedYear === '4th Year') return [7, 8];
+    return [];
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,6 +61,9 @@ const AdminUpload = () => {
         data.append('description', formData.description);
         data.append('subject', formData.subject);
         data.append('semester', formData.semester);
+        data.append('year', formData.year);
+        data.append('isSyllabus', formData.isSyllabus);
+        
         res = await axios.post(`/notes`, data, {
           headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
         });
@@ -58,7 +74,7 @@ const AdminUpload = () => {
       }
       if (res.data.success) {
         setStatus(`Success! ${type} posted successfully.`);
-        setFormData({ title: '', description: '', subject: '', semester: '', category: 'Hackathon', date: '', link: '', company: '', techStack: '' });
+        setFormData({ title: '', description: '', subject: '', semester: '', year: '1st Year', category: 'Hackathon', date: '', link: '', company: '', techStack: '', isSyllabus: false });
         setFile(null);
         e.target.reset(); 
       }
@@ -68,14 +84,12 @@ const AdminUpload = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gray-50/50 p-6 flex flex-col items-center gap-10">
+      {/* --- FORM SECTION --- */}
       <div className="bg-white rounded-[3rem] shadow-2xl border border-gray-100 p-10 max-w-4xl w-full relative">
-        
-        {/* --- CROSS / BACK BUTTON --- */}
         <button 
           onClick={() => navigate('/dashboard')} 
           className="absolute top-8 right-8 p-3 bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
-          title="Back to Dashboard"
         >
           <X size={24} strokeWidth={3} />
         </button>
@@ -84,7 +98,6 @@ const AdminUpload = () => {
           <PlusCircle className="text-blue-600" size={36} /> Content Manager
         </h1>
 
-        {/* Tab Switcher */}
         <div className="flex gap-2 mb-10 bg-gray-50 p-2 rounded-[2rem] border border-gray-100">
           {[
             { id: 'notes', icon: <BookOpen size={18}/> }, 
@@ -104,14 +117,30 @@ const AdminUpload = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {type === 'notes' && (
-            <div className="border-4 border-dashed border-blue-50 bg-blue-50/20 p-10 rounded-[2.5rem] text-center hover:border-blue-200 transition-all group cursor-pointer relative">
-              <input type="file" required id="file-upload" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
-              <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-4">
-                <div className="bg-white p-5 rounded-3xl shadow-sm group-hover:scale-110 transition-transform text-blue-600">
-                  <FileUp size={40} />
+            <div className="flex flex-col gap-6">
+              <div className="border-4 border-dashed border-blue-50 bg-blue-50/20 p-10 rounded-[2.5rem] text-center hover:border-blue-200 transition-all group cursor-pointer relative">
+                <input type="file" required id="file-upload" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
+                <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-4">
+                  <div className="bg-white p-5 rounded-3xl shadow-sm group-hover:scale-110 transition-transform text-blue-600">
+                    <FileUp size={40} />
+                  </div>
+                  <p className="text-blue-900 font-black text-lg">{file ? file.name : 'Select PDF Study Material'}</p>
+                </label>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, isSyllabus: !formData.isSyllabus})}
+                className={`flex items-center justify-between p-5 rounded-3xl border-2 transition-all ${formData.isSyllabus ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-gray-100 bg-white text-gray-400'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Star fill={formData.isSyllabus ? "currentColor" : "none"} size={24} />
+                  <span className="font-bold">Mark as Official Syllabus</span>
                 </div>
-                <p className="text-blue-900 font-black text-lg">{file ? file.name : 'Select PDF Study Material'}</p>
-              </label>
+                <div className={`w-12 h-6 rounded-full relative transition-all ${formData.isSyllabus ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.isSyllabus ? 'right-1' : 'left-1'}`}></div>
+                </div>
+              </button>
             </div>
           )}
 
@@ -123,73 +152,103 @@ const AdminUpload = () => {
 
             {type === 'notes' && (
               <>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Subject</label>
-                  <input type="text" placeholder="e.g. Operating Systems" className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-blue-500" onChange={(e) => setFormData({...formData, subject: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Semester</label>
-                  <input type="text" placeholder="e.g. 6" className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-blue-500" onChange={(e) => setFormData({...formData, semester: e.target.value})} />
-                </div>
-              </>
-            )}
-
-            {type === 'events' && (
-              <>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Event Date</label>
-                  <input type="date" required className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-blue-500" onChange={(e) => setFormData({...formData, date: e.target.value})} />
-                </div>
                 <div className="space-y-2 relative">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Category</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Target Year</label>
                   <div className="relative">
                     <select 
-                      value={formData.category}
-                      className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] appearance-none outline-none focus:ring-2 focus:ring-blue-500 font-bold cursor-pointer"
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                      value={formData.year}
+                      className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] appearance-none outline-none focus:ring-2 focus:ring-blue-500 font-bold cursor-pointer text-gray-800"
+                      onChange={(e) => setFormData({...formData, year: e.target.value, semester: ''})}
                     >
-                      {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                      {years.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-5 text-gray-400 pointer-events-none" size={20} />
+                  </div>
+                </div>
+
+                <div className="space-y-2 relative">
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Semester</label>
+                  <div className="relative">
+                    <select 
+                      required
+                      value={formData.semester}
+                      className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] appearance-none outline-none focus:ring-2 focus:ring-blue-500 font-bold cursor-pointer text-gray-800"
+                      onChange={(e) => setFormData({...formData, semester: e.target.value})}
+                    >
+                      <option value="">Select Semester</option>
+                      {getSemsForYear(formData.year).map(num => (
+                        <option key={num} value={num}>Semester {num}</option>
                       ))}
                     </select>
                     <ChevronDown className="absolute right-5 top-5 text-gray-400 pointer-events-none" size={20} />
                   </div>
                 </div>
+
                 <div className="space-y-2 col-span-full">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest text-blue-600">Event Website / Registration Link</label>
-                  <div className="relative">
-                    <LinkIcon className="absolute left-5 top-5 text-gray-400" size={20} />
-                    <input type="url" placeholder="https://..." className="w-full pl-14 p-5 bg-blue-50/30 border-none rounded-[1.5rem] focus:ring-2 focus:ring-blue-500 font-medium text-blue-700" onChange={(e) => setFormData({...formData, link: e.target.value})} />
-                  </div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Subject Name</label>
+                  <input type="text" placeholder="e.g. Data Structures" required value={formData.subject} className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-blue-500 font-bold" onChange={(e) => setFormData({...formData, subject: e.target.value})} />
                 </div>
               </>
             )}
 
+            {/* Event specific fields */}
+            {type === 'events' && (
+               <>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Event Date</label>
+                   <input type="date" required className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-800" onChange={(e) => setFormData({...formData, date: e.target.value})} />
+                 </div>
+                 <div className="space-y-2 relative">
+                   <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Category</label>
+                   <div className="relative">
+                     <select 
+                       value={formData.category}
+                       className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] appearance-none outline-none focus:ring-2 focus:ring-blue-500 font-bold cursor-pointer text-gray-800"
+                       onChange={(e) => setFormData({...formData, category: e.target.value})}
+                     >
+                       {categories.map(cat => (
+                         <option key={cat} value={cat}>{cat}</option>
+                       ))}
+                     </select>
+                     <ChevronDown className="absolute right-5 top-5 text-gray-400 pointer-events-none" size={20} />
+                   </div>
+                 </div>
+                 <div className="space-y-2 col-span-full">
+                   <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest text-blue-600">Event Website / Registration Link</label>
+                   <div className="relative">
+                     <LinkIcon className="absolute left-5 top-5 text-gray-400" size={20} />
+                     <input type="url" placeholder="https://..." className="w-full pl-14 p-5 bg-blue-50/30 border-none rounded-[1.5rem] focus:ring-2 focus:ring-blue-500 font-medium text-blue-700" onChange={(e) => setFormData({...formData, link: e.target.value})} />
+                   </div>
+                 </div>
+               </>
+            )}
+
+            {/* Internship specific fields */}
             {type === 'internships' && (
-              <>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Company Name</label>
-                  <input type="text" placeholder="e.g. Google" className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-blue-500" onChange={(e) => setFormData({...formData, company: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Required Tech Stack</label>
-                  <input type="text" placeholder="e.g. React, Node, AWS" className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-blue-500" onChange={(e) => setFormData({...formData, techStack: e.target.value})} />
-                </div>
-                <div className="space-y-2 col-span-full">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest text-blue-600">Apply Link</label>
-                  <input type="url" placeholder="https://..." className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-blue-500" onChange={(e) => setFormData({...formData, link: e.target.value})} />
-                </div>
-              </>
+               <>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Company Name</label>
+                   <input type="text" placeholder="e.g. Google" className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-blue-500 font-bold" onChange={(e) => setFormData({...formData, company: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Tech Stack</label>
+                   <input type="text" placeholder="e.g. React, Node" className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-blue-500 font-bold" onChange={(e) => setFormData({...formData, techStack: e.target.value})} />
+                 </div>
+                 <div className="space-y-2 col-span-full">
+                   <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest text-blue-600">Apply Link</label>
+                   <input type="url" placeholder="https://..." className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] focus:ring-2 focus:ring-blue-500 font-medium text-blue-700" onChange={(e) => setFormData({...formData, link: e.target.value})} />
+                 </div>
+               </>
             )}
 
             <div className="space-y-2 col-span-full">
               <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest flex items-center gap-1">
-                <AlignLeft size={12} /> Description / Pathly Expert Tips (Optional)
+                <AlignLeft size={12} /> Description
               </label>
               <textarea 
-                placeholder="Write full details about this post..." 
+                placeholder="Details about this resource..." 
                 value={formData.description} 
-                className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] h-40 outline-none focus:ring-2 focus:ring-blue-500 transition-all leading-relaxed" 
+                className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] h-32 outline-none focus:ring-2 focus:ring-blue-500 transition-all leading-relaxed font-medium" 
                 onChange={(e) => setFormData({...formData, description: e.target.value})} 
               />
             </div>
@@ -206,6 +265,11 @@ const AdminUpload = () => {
              {status}
           </div>
         )}
+      </div>
+
+      {/* --- MANAGE CONTENT SECTION --- */}
+      <div className="w-full max-w-4xl pb-20">
+         <ManageContent />
       </div>
     </div>
   );
