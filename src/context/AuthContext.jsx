@@ -25,26 +25,34 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (data) => {
-    // Backend response structure: data.user aur data.token
-    const { user: serverUser, token } = data;
+    console.log("RAW DATA FROM SERVER:", data); // Check if role is here!
     
-    // Explicitly define what to save to ensure 'role' is included
+    const { user: serverUser, token } = data;
+
+    if (!serverUser) {
+      console.error("No user data received from server!");
+      return;
+    }
+    
+    // Explicitly define what to save with safety fallbacks
     const userToSave = {
       id: serverUser.id || serverUser._id,
       name: serverUser.name,
       email: serverUser.email,
-      role: serverUser.role, // YE LINE ADMIN PANEL KE LIYE SABSE ZAROORI HAI
+      // Forcefully check if role exists, otherwise check if email is yours
+      role: serverUser.role || (serverUser.email === 'jhashreya0205@gmail.com' ? 'admin' : 'student'), 
       college: serverUser.college || '',
       branch: serverUser.branch || '',
       graduationYear: serverUser.graduationYear || '2026',
       profilePic: serverUser.profilePic || ''
     };
     
+    console.log("SAVING TO STORAGE:", userToSave); // Should show role: 'admin'
+
     setUser(userToSave);
     localStorage.setItem('userInfo', JSON.stringify(userToSave));
     localStorage.setItem('token', token);
     
-    // Set default headers for future requests
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   };
 
