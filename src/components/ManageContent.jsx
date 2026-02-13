@@ -12,11 +12,20 @@ const ManageContent = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get(`/api/${activeTab}`);
-      // Backend response structures differ, so we handle them here
-      setItems(data.data || data); 
+      // FIXED: removed '/api' because axiosConfig already handles it
+      const { data } = await axios.get(`/${activeTab}`);
+      
+      // Handle different response structures
+      if (data.success && data.data) {
+        setItems(data.data);
+      } else if (Array.isArray(data)) {
+        setItems(data);
+      } else {
+        setItems(data.data || []);
+      }
     } catch (err) {
       console.error("Error fetching items:", err);
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -31,9 +40,11 @@ const ManageContent = () => {
     if (window.confirm(`Are you sure you want to delete this ${activeTab.slice(0, -1)}?`)) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`/api/${activeTab}/${id}`, {
+        // FIXED: removed '/api' to prevent double /api/api in URL
+        await axios.delete(`/${activeTab}/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        
         // Remove from UI immediately
         setItems(items.filter(item => item._id !== id));
       } catch (err) {
@@ -42,9 +53,10 @@ const ManageContent = () => {
     }
   };
 
-  const filteredItems = items.filter(item => 
-    (item.title || item.role || item.company).toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredItems = items.filter(item => {
+    const title = item.title || item.role || item.company || "";
+    return title.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white rounded-[3rem] shadow-xl border border-gray-100 mt-10">
@@ -93,20 +105,20 @@ const ManageContent = () => {
         ) : filteredItems.length > 0 ? (
           filteredItems.map((item) => (
             <div key={item._id} className="flex items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-md transition-all group">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+              <div className="flex items-center gap-4 text-left">
+                <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors shrink-0">
                   {activeTab === 'notes' ? <BookOpen size={24} /> : activeTab === 'events' ? <Calendar size={24} /> : <Briefcase size={24} />}
                 </div>
-                <div>
-                  <h4 className="font-bold text-gray-800">{item.title || `${item.role} at ${item.company}`}</h4>
-                  <p className="text-xs text-gray-400 font-medium">
+                <div className="overflow-hidden">
+                  <h4 className="font-bold text-gray-800 truncate">{item.title || `${item.role} at ${item.company}`}</h4>
+                  <p className="text-xs text-gray-400 font-medium truncate">
                     {item.subject || item.category || item.techStack} • {new Date(item.createdAt || item.postedAt || item.date).toLocaleDateString()}
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => handleDelete(item._id)}
-                className="p-3 text-gray-300 hover:text-white hover:bg-red-500 rounded-xl transition-all shadow-sm active:scale-90"
+                className="p-3 text-gray-300 hover:text-white hover:bg-red-500 rounded-xl transition-all shadow-sm active:scale-90 shrink-0"
               >
                 <Trash2 size={20} />
               </button>
