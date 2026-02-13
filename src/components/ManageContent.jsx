@@ -12,7 +12,7 @@ const ManageContent = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get(`/${activeTab}`);
+      const { data } = await axios.get(`/api/${activeTab}`);
       // Backend response structures differ, so we handle them here
       setItems(data.data || data); 
     } catch (err) {
@@ -31,7 +31,7 @@ const ManageContent = () => {
     if (window.confirm(`Are you sure you want to delete this ${activeTab.slice(0, -1)}?`)) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`/${activeTab}/${id}`, {
+        await axios.delete(`/api/${activeTab}/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         // Remove from UI immediately
